@@ -1,4 +1,4 @@
-module go-trackerclient
+module github.com/archiveteam/go-trackerclient
 
 go 1.20
 
