@@ -86,7 +86,7 @@ type requestItemsResponse struct {
 	Queues []string `json:"queues"`
 }
 
-func (that *TrackerClient) RequestItems(limit int) ([]string, error) {
+func (that *TrackerClient) RequestItems(limit uint64) ([]string, error) {
 	if limit < 1 {
 		return nil, fmt.Errorf("limit must be greater than 0")
 	}
