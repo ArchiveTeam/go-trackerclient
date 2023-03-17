@@ -3,6 +3,7 @@ package trackerclient
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -28,8 +29,25 @@ type TrackerClient struct {
 type Item struct {
 }
 
+type RetryLogger struct {
+	retryablehttp.LeveledLogger
+}
+
+func (that *RetryLogger) Debug(_ string, _ ...interface{}) {
+}
+func (that *RetryLogger) Info(msg string, keysAndValues ...interface{}) {
+	log.Printf("[INFO] %s %s", msg, keysAndValues)
+}
+func (that *RetryLogger) Warn(msg string, keysAndValues ...interface{}) {
+	log.Printf("[WARN] %s %s", msg, keysAndValues)
+}
+func (that *RetryLogger) Error(msg string, keysAndValues ...interface{}) {
+	log.Printf("[ERROR] %s %s", msg, keysAndValues)
+}
+
 func NewTrackerConfig(trackerConfig *TrackerConfig) (*TrackerClient, error) {
 	trackerConfig.httpClient = retryablehttp.NewClient()
+	trackerConfig.httpClient.Logger = &RetryLogger{}
 	if trackerConfig.TrackerUrl == "" {
 		trackerConfig.TrackerUrl = defaultTrackerUrl
 	}
