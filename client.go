@@ -1,6 +1,7 @@
 package trackerclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -104,7 +105,7 @@ type requestItemsResponse struct {
 	Queues []string `json:"queues"`
 }
 
-func (that *TrackerClient) RequestItems(limit uint64) ([]string, error) {
+func (that *TrackerClient) RequestItemsContext(ctx context.Context, limit uint64) ([]string, error) {
 	if limit < 1 {
 		return nil, fmt.Errorf("limit must be greater than 0")
 	}
@@ -124,7 +125,7 @@ func (that *TrackerClient) RequestItems(limit uint64) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := that.trackerConfig.httpClient.Do(req)
+	res, err := that.trackerConfig.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +146,12 @@ func (that *TrackerClient) RequestItems(limit uint64) ([]string, error) {
 	return response.Items, nil
 }
 
-func (that *TrackerClient) RequestItem() (item string, err error) {
-	items, err := that.RequestItems(1)
+func (that *TrackerClient) RequestItems(limit uint64) ([]string, error) {
+	return that.RequestItemsContext(context.Background(), limit)
+}
+
+func (that *TrackerClient) RequestItemContext(ctx context.Context) (item string, err error) {
+	items, err := that.RequestItemsContext(ctx, 1)
 	if err != nil {
 		return "", err
 	}
@@ -156,6 +161,10 @@ func (that *TrackerClient) RequestItem() (item string, err error) {
 	return items[0], nil
 }
 
+func (that *TrackerClient) RequestItem() (item string, err error) {
+	return that.RequestItemContext(context.Background())
+}
+
 type itemsDoneRequest struct {
 	Downloader string            `json:"downloader"`
 	Version    string            `json:"version"`
@@ -163,7 +172,7 @@ type itemsDoneRequest struct {
 	Bytes      map[string]uint64 `json:"bytes"`
 }
 
-func (that *TrackerClient) ItemsDone(items []string, bytes map[string]uint64) error {
+func (that *TrackerClient) ItemsDoneContext(ctx context.Context, items []string, bytes map[string]uint64) error {
 	if len(items) == 0 {
 		return nil
 	}
@@ -180,7 +189,7 @@ func (that *TrackerClient) ItemsDone(items []string, bytes map[string]uint64) er
 	if err != nil {
 		return err
 	}
-	res, err := that.trackerConfig.httpClient.Do(req)
+	res, err := that.trackerConfig.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -192,4 +201,16 @@ func (that *TrackerClient) ItemsDone(items []string, bytes map[string]uint64) er
 		return fmt.Errorf("%s: %d", ErrInvalidTrackerResponse, res.StatusCode)
 	}
 	return nil
+}
+
+func (that *TrackerClient) ItemsDone(items []string, bytes map[string]uint64) error {
+	return that.ItemsDoneContext(context.Background(), items, bytes)
+}
+
+func (that *TrackerClient) ItemDoneContext(ctx context.Context, item string) error {
+	return that.ItemsDoneContext(ctx, []string{item}, nil)
+}
+
+func (that *TrackerClient) ItemDone(item string) error {
+	return that.ItemDoneContext(context.Background(), item)
 }
