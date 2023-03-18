@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-retryablehttp"
@@ -21,6 +22,7 @@ type TrackerConfig struct {
 	Username       string
 	Password       string
 	httpClient     *retryablehttp.Client
+	RequestTimeout time.Duration
 }
 
 type TrackerClient struct {
@@ -49,6 +51,7 @@ func (that *RetryLogger) Error(msg string, keysAndValues ...interface{}) {
 func NewTrackerConfig(trackerConfig *TrackerConfig) (*TrackerClient, error) {
 	trackerConfig.httpClient = retryablehttp.NewClient()
 	trackerConfig.httpClient.Logger = &RetryLogger{}
+	trackerConfig.httpClient.HTTPClient.Timeout = trackerConfig.RequestTimeout
 	if trackerConfig.TrackerUrl == "" {
 		trackerConfig.TrackerUrl = defaultTrackerUrl
 	}
